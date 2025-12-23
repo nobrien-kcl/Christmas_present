@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<title>Christmas Present</title>
+<title>Christmas Present 2025</title>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 
 <style>
@@ -14,34 +14,21 @@ body {
   padding: 20px;
 }
 
-h1 {
-  text-align: center;
-  margin-bottom: 30px;
-}
+h1 { text-align: center; }
 
 .games {
   display: grid;
   grid-template-columns: repeat(2, minmax(320px, 1fr));
   gap: 30px;
-  justify-content: center;
 }
 
 @media (max-width: 800px) {
-  .games {
-    grid-template-columns: 1fr;
-  }
+  .games { grid-template-columns: 1fr; }
 }
 
-.game {
-  max-width: 360px;
-  margin: auto;
-}
+.game { max-width: 360px; margin: auto; }
 
-.row {
-  display: flex;
-  justify-content: center;
-  margin: 4px 0;
-}
+.row { display: flex; justify-content: center; margin: 4px 0; }
 
 .tile {
   width: 44px;
@@ -52,13 +39,13 @@ h1 {
   display: flex;
   justify-content: center;
   align-items: center;
-  text-transform: uppercase;
   font-weight: bold;
+  text-transform: uppercase;
 }
 
-.correct { background: #6aaa64; border-color: #6aaa64; }
-.present { background: #c9b458; border-color: #c9b458; }
-.absent  { background: #3a3a3c; border-color: #3a3a3c; }
+.correct { background:#6aaa64; border-color:#6aaa64; }
+.present { background:#c9b458; border-color:#c9b458; }
+.absent  { background:#3a3a3c; border-color:#3a3a3c; }
 
 .hidden {
   opacity: 0;
@@ -69,28 +56,47 @@ h1 {
 .game:not(.hidden) {
   opacity: 1;
   transform: translateY(0);
-  transition: all 0.6s ease;
+  transition: all 0.5s ease;
 }
 
-input {
+input, button {
   width: 100%;
   font-size: 18px;
   padding: 8px;
-  margin-top: 10px;
+  margin-top: 6px;
 }
 
-button {
-  width: 100%;
-  padding: 10px;
-  margin-top: 6px;
-  font-size: 18px;
+.keyboard {
+  margin: 30px auto;
+  max-width: 500px;
 }
+
+.krow {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 6px;
+}
+
+.key {
+  background: #555;
+  color: #fff;
+  padding: 10px;
+  margin: 2px;
+  min-width: 32px;
+  text-align: center;
+  border-radius: 4px;
+  font-weight: bold;
+}
+
+.key.correct { background:#6aaa64; }
+.key.present { background:#c9b458; }
+.key.absent  { background:#3a3a3c; }
 
 #reveal {
+  display: none;
   text-align: center;
   font-size: 22px;
-  margin-top: 40px;
-  display: none;
+  margin-top: 30px;
 }
 </style>
 </head>
@@ -99,167 +105,93 @@ button {
 <h1>Christmas Present Puzzle 🎄</h1>
 
 <div class="games">
-
   <div id="game1" class="game">
-    <h2>Puzzle 1 (7 letters)</h2>
-    <div id="grid1"></div>
-    <div id="msg1"></div>
+    <h2>Puzzle 1 (7)</h2>
+    <div id="grid1"></div><div id="msg1"></div>
     <input id="guess1" maxlength="7">
     <button onclick="submitGuess(1)">Guess</button>
   </div>
 
   <div id="game2" class="game hidden">
-    <h2>Puzzle 2 (6 letters)</h2>
-    <div id="grid2"></div>
-    <div id="msg2"></div>
+    <h2>Puzzle 2 (6)</h2>
+    <div id="grid2"></div><div id="msg2"></div>
     <input id="guess2" maxlength="6">
     <button onclick="submitGuess(2)">Guess</button>
   </div>
 
   <div id="game3" class="game hidden">
-    <h2>Puzzle 3 (4 letters)</h2>
-    <div id="grid3"></div>
-    <div id="msg3"></div>
+    <h2>Puzzle 3 (4)</h2>
+    <div id="grid3"></div><div id="msg3"></div>
     <input id="guess3" maxlength="4">
     <button onclick="submitGuess(3)">Guess</button>
   </div>
 
   <div id="game4" class="game hidden">
-    <h2>Puzzle 4 (6 letters)</h2>
-    <div id="grid4"></div>
-    <div id="msg4"></div>
+    <h2>Puzzle 4 (6)</h2>
+    <div id="grid4"></div><div id="msg4"></div>
     <input id="guess4" maxlength="6">
     <button onclick="submitGuess(4)">Guess</button>
   </div>
-
 </div>
 
+<!-- KEYBOARD -->
+<div class="keyboard" id="keyboard"></div>
+
 <div id="reveal">
-🎉 <strong>SNOW PATROL</strong> in <strong>Crystal Palace Park</strong> — July 2026! 🎶
+🎉 <strong>SNOW PATROL</strong> at <strong>CRYSTAL PALACE PARK</strong> — July 6th 2026! 🎶
 </div>
 
 <script>
 const ANSWERS = {
-  1: "crystal",
-  2: "palace",
-  3: "snow",
-  4: "patrol"
+  1:"crystal",
+  2:"palace",
+  3:"snow",
+  4:"patrol"
 };
+const MAX_GUESSES = 8;
 
-const MAX_GUESSES = 6;
+let state = {1:{tries:0},2:{tries:0},3:{tries:0},4:{tries:0}};
+let keyState = {};
 
-let state = {
-  1:{tries:0},
-  2:{tries:0},
-  3:{tries:0},
-  4:{tries:0}
-};
+const rows = ["qwertyuiop","asdfghjkl","zxcvbnm"];
 
-function createGrid(n, len) {
-  const grid = document.getElementById("grid" + n);
-  for (let r = 0; r < MAX_GUESSES; r++) {
-    const row = document.createElement("div");
-    row.className = "row";
-    for (let c = 0; c < len; c++) {
-      const tile = document.createElement("div");
-      tile.className = "tile";
-      tile.id = `t-${n}-${r}-${c}`;
-      row.appendChild(tile);
-    }
-    grid.appendChild(row);
-  }
+function buildKeyboard() {
+  const kb = document.getElementById("keyboard");
+  kb.innerHTML = "";
+  rows.forEach(r=>{
+    const row=document.createElement("div");
+    row.className="krow";
+    [...r].forEach(l=>{
+      const k=document.createElement("div");
+      k.className="key";
+      k.id="key-"+l;
+      k.textContent=l.toUpperCase();
+      row.appendChild(k);
+    });
+    kb.appendChild(row);
+  });
+}
+buildKeyboard();
+
+function resetKeyboard(){
+  keyState={};
+  document.querySelectorAll(".key").forEach(k=>{
+    k.classList.remove("correct","present","absent");
+  });
 }
 
-createGrid(1,7);
-createGrid(2,6);
-createGrid(3,4);
-createGrid(4,6);
-
-function submitGuess(n) {
-  const input = document.getElementById("guess" + n);
-  const msg = document.getElementById("msg" + n);
-  const guess = input.value.toLowerCase();
-  input.value = "";
-
-  if (!/^[a-z]+$/.test(guess) || guess.length !== ANSWERS[n].length) {
-    msg.textContent = "Invalid word";
-    return;
-  }
-
-  let row = state[n].tries;
-  if (row >= MAX_GUESSES) return;
-
-  const answer = ANSWERS[n];
-  let freq = {};
-  for (let c of answer) freq[c] = (freq[c] || 0) + 1;
-
-  let result = Array(guess.length).fill("absent");
-
-  for (let i = 0; i < guess.length; i++) {
-    if (guess[i] === answer[i]) {
-      result[i] = "correct";
-      freq[guess[i]]--;
+function createGrid(n,len){
+  const g=document.getElementById("grid"+n);
+  for(let r=0;r<MAX_GUESSES;r++){
+    const row=document.createElement("div");
+    row.className="row";
+    for(let c=0;c<len;c++){
+      const t=document.createElement("div");
+      t.className="tile";
+      t.id=`t-${n}-${r}-${c}`;
+      row.appendChild(t);
     }
+    g.appendChild(row);
   }
-
-  for (let i = 0; i < guess.length; i++) {
-    if (result[i] === "correct") continue;
-    if (freq[guess[i]] > 0) {
-      result[i] = "present";
-      freq[guess[i]]--;
-    }
-  }
-
-  for (let i = 0; i < guess.length; i++) {
-    const tile = document.getElementById(`t-${n}-${row}-${i}`);
-    tile.textContent = guess[i];
-    tile.classList.add(result[i]);
-  }
-
-  if (guess === answer) {
-    msg.textContent = "Correct!";
-    if (n < 4) {
-      document.getElementById("game" + (n + 1)).classList.remove("hidden");
-    } else {
-      revealPrize();
-    }
-  } else {
-    msg.textContent = (MAX_GUESSES - row - 1) + " guesses left";
-  }
-
-  state[n].tries++;
 }
-
-function revealPrize() {
-  document.getElementById("reveal").style.display = "block";
-  launchConfetti();
-}
-
-function launchConfetti() {
-  const colors = ["#6aaa64", "#c9b458", "#ffffff"];
-  const end = Date.now() + 2000;
-
-  (function frame() {
-    for (let i = 0; i < 10; i++) {
-      const c = document.createElement("div");
-      c.style.position = "fixed";
-      c.style.top = Math.random() * 100 + "%";
-      c.style.left = Math.random() * 100 + "%";
-      c.style.width = "8px";
-      c.style.height = "8px";
-      c.style.background = colors[Math.floor(Math.random() * colors.length)];
-      c.style.opacity = "1";
-      c.style.transition = "all 2s linear";
-      document.body.appendChild(c);
-      setTimeout(() => {
-        c.style.transform = "translateY(200px) rotate(720deg)";
-        c.style.opacity = "0";
-      }, 10);
-      setTimeout(() => c.remove(), 2100);
-    }
-    if (Date.now() < end) requestAnimationFrame(frame);
-  })();
-}
-</script>
-</body>
-</html>
+createGrid(1,7); createGrid(2,

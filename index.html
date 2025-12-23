@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<title>Christmas Present 2025</title>
+<title>Christmas Present</title>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 
 <style>
@@ -138,7 +138,7 @@ input, button {
 <div class="keyboard" id="keyboard"></div>
 
 <div id="reveal">
-🎉 <strong>SNOW PATROL</strong> at <strong>CRYSTAL PALACE PARK</strong> — July 6th 2026! 🎶
+🎉 <strong>SNOW PATROL</strong> in <strong>Crystal Palace Park</strong> — July 2026! 🎶
 </div>
 
 <script>
@@ -148,7 +148,7 @@ const ANSWERS = {
   3:"snow",
   4:"patrol"
 };
-const MAX_GUESSES = 8;
+const MAX_GUESSES = 6;
 
 let state = {1:{tries:0},2:{tries:0},3:{tries:0},4:{tries:0}};
 let keyState = {};
@@ -194,4 +194,61 @@ function createGrid(n,len){
     g.appendChild(row);
   }
 }
-createGrid(1,7); createGrid(2,
+createGrid(1,7); createGrid(2,6); createGrid(3,4); createGrid(4,6);
+
+function submitGuess(n){
+  const g=document.getElementById("guess"+n);
+  const msg=document.getElementById("msg"+n);
+  const guess=g.value.toLowerCase();
+  g.value="";
+
+  if(!/^[a-z]+$/.test(guess) || guess.length!==ANSWERS[n].length){
+    msg.textContent="Invalid word"; return;
+  }
+
+  const ans=ANSWERS[n];
+  let freq={}; [...ans].forEach(c=>freq[c]=(freq[c]||0)+1);
+  let res=Array(guess.length).fill("absent");
+
+  for(let i=0;i<guess.length;i++){
+    if(guess[i]===ans[i]){
+      res[i]="correct"; freq[guess[i]]--;
+    }
+  }
+  for(let i=0;i<guess.length;i++){
+    if(res[i]==="correct")continue;
+    if(freq[guess[i]]>0){
+      res[i]="present"; freq[guess[i]]--;
+    }
+  }
+
+  const row=state[n].tries;
+  res.forEach((r,i)=>{
+    const t=document.getElementById(`t-${n}-${row}-${i}`);
+    t.textContent=guess[i];
+    t.classList.add(r);
+
+    const k=document.getElementById("key-"+guess[i]);
+    if(!keyState[guess[i]] || r==="correct"){
+      keyState[guess[i]]=r;
+      k.className="key "+r;
+    }
+  });
+
+  if(guess===ans){
+    msg.textContent="Correct!";
+    resetKeyboard();
+    if(n<4){
+      document.getElementById("game"+(n+1)).classList.remove("hidden");
+    } else {
+      document.getElementById("reveal").style.display="block";
+    }
+  } else {
+    msg.textContent=(MAX_GUESSES-row-1)+" guesses left";
+  }
+
+  state[n].tries++;
+}
+</script>
+</body>
+</html>

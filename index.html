@@ -54,9 +54,7 @@ h1 { text-align: center; }
 .present { background:#c9b458; border-color:#c9b458; }
 .absent  { background:#3a3a3c; border-color:#3a3a3c; }
 
-.hidden {
-  display: none;
-}
+.hidden { display: none; }
 
 input, button {
   width: 100%;
@@ -65,9 +63,7 @@ input, button {
   margin-top: 6px;
 }
 
-.keyboard-holder {
-  margin-top: 15px;
-}
+.keyboard-holder { margin-top: 15px; }
 
 .krow {
   display: flex;
@@ -90,11 +86,45 @@ input, button {
 .key.present { background:#c9b458; }
 .key.absent  { background:#3a3a3c; }
 
-#reveal {
+/* 🎁 POPUP MODAL */
+#overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
   display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+#popup {
+  background: #222;
+  border-radius: 12px;
+  padding: 30px 40px;
   text-align: center;
-  font-size: 22px;
-  margin-top: 40px;
+  max-width: 420px;
+  animation: pop 0.4s ease;
+}
+
+@keyframes pop {
+  from { transform: scale(0.7); opacity: 0; }
+  to   { transform: scale(1); opacity: 1; }
+}
+
+/* 🎉 CONFETTI */
+.confetti {
+  position: fixed;
+  width: 8px;
+  height: 8px;
+  top: -10px;
+  animation: fall 3s linear forwards;
+}
+
+@keyframes fall {
+  to {
+    transform: translateY(110vh) rotate(720deg);
+    opacity: 0;
+  }
 }
 </style>
 </head>
@@ -142,126 +172,97 @@ input, button {
 
 </div>
 
-<div id="reveal">
-🎉 <strong>SNOW PATROL</strong> in <strong>Crystal Palace Park</strong> — July 2026! 🎶
+<!-- 🎁 FINAL POPUP -->
+<div id="overlay">
+  <div id="popup">
+    <h2>🎉 Surprise! 🎉</h2>
+    <p><strong>SNOW PATROL</strong></p>
+    <p>Crystal Palace Park</p>
+    <p>6th July 2026 🎶</p>
+  </div>
 </div>
 
 <script>
-const ANSWERS = {
-  1:"crystal",
-  2:"palace",
-  3:"snow",
-  4:"patrol"
-};
+const ANSWERS={1:"crystal",2:"palace",3:"snow",4:"patrol"};
+const MAX=6, rows=["qwertyuiop","asdfghjkl","zxcvbnm"];
+let state={1:{t:0},2:{t:0},3:{t:0},4:{t:0}}, keyState={};
 
-const MAX_GUESSES = 6;
-const rows = ["qwertyuiop","asdfghjkl","zxcvbnm"];
-
-let state = {1:{tries:0},2:{tries:0},3:{tries:0},4:{tries:0}};
-let keyState = {};
-
-function createGrid(n,len){
+function grid(n,l){
   const g=document.getElementById("grid"+n);
-  for(let r=0;r<MAX_GUESSES;r++){
-    const row=document.createElement("div");
-    row.className="row";
-    for(let c=0;c<len;c++){
+  for(let r=0;r<MAX;r++){
+    const row=document.createElement("div"); row.className="row";
+    for(let c=0;c<l;c++){
       const t=document.createElement("div");
-      t.className="tile";
-      t.id=`t-${n}-${r}-${c}`;
+      t.className="tile"; t.id=`t-${n}-${r}-${c}`;
       row.appendChild(t);
     }
     g.appendChild(row);
   }
 }
+grid(1,7); grid(2,6); grid(3,4); grid(4,6);
 
-createGrid(1,7);
-createGrid(2,6);
-createGrid(3,4);
-createGrid(4,6);
-
-function buildKeyboard(holderId){
-  const holder=document.getElementById(holderId);
-  holder.innerHTML="";
+function buildKB(id){
+  const h=document.getElementById(id); h.innerHTML="";
   rows.forEach(r=>{
-    const row=document.createElement("div");
-    row.className="krow";
+    const row=document.createElement("div"); row.className="krow";
     [...r].forEach(l=>{
       const k=document.createElement("div");
-      k.className="key";
-      k.id="key-"+l;
-      k.textContent=l.toUpperCase();
+      k.className="key"; k.id="key-"+l; k.textContent=l.toUpperCase();
       row.appendChild(k);
     });
-    holder.appendChild(row);
+    h.appendChild(row);
   });
 }
+buildKB("kb-holder-1");
 
-function resetKeyboard(){
-  keyState={};
+function confetti(){
+  for(let i=0;i<150;i++){
+    const c=document.createElement("div");
+    c.className="confetti";
+    c.style.left=Math.random()*100+"vw";
+    c.style.background=`hsl(${Math.random()*360},100%,50%)`;
+    c.style.animationDuration=2+Math.random()*2+"s";
+    document.body.appendChild(c);
+    setTimeout(()=>c.remove(),4000);
+  }
 }
-
-buildKeyboard("kb-holder-1");
 
 function submitGuess(n){
   const input=document.getElementById("guess"+n);
-  const msg=document.getElementById("msg"+n);
-  const guess=input.value.toLowerCase();
-  input.value="";
+  const guess=input.value.toLowerCase(); input.value="";
+  const ans=ANSWERS[n]; if(guess.length!==ans.length) return;
 
-  if(!/^[a-z]+$/.test(guess) || guess.length!==ANSWERS[n].length){
-    msg.textContent="Invalid word";
-    return;
-  }
-
-  const ans=ANSWERS[n];
-  let freq={};
+  let freq={}, res=Array(ans.length).fill("absent");
   [...ans].forEach(c=>freq[c]=(freq[c]||0)+1);
-  let res=Array(guess.length).fill("absent");
-
-  for(let i=0;i<guess.length;i++){
-    if(guess[i]===ans[i]){
-      res[i]="correct"; freq[guess[i]]--;
-    }
+  for(let i=0;i<ans.length;i++){
+    if(guess[i]===ans[i]){res[i]="correct"; freq[guess[i]]--;}
   }
-  for(let i=0;i<guess.length;i++){
-    if(res[i]==="correct") continue;
-    if(freq[guess[i]]>0){
+  for(let i=0;i<ans.length;i++){
+    if(res[i]==="absent" && freq[guess[i]]>0){
       res[i]="present"; freq[guess[i]]--;
     }
   }
 
-  const row=state[n].tries;
-  res.forEach((r,i)=>{
-    const t=document.getElementById(`t-${n}-${row}-${i}`);
-    t.textContent=guess[i];
-    t.classList.add(r);
-
+  const r=state[n].t;
+  res.forEach((s,i)=>{
+    const t=document.getElementById(`t-${n}-${r}-${i}`);
+    t.textContent=guess[i]; t.classList.add(s);
     const k=document.getElementById("key-"+guess[i]);
-    if(!keyState[guess[i]] || r==="correct"){
-      keyState[guess[i]]=r;
-      k.className="key "+r;
-    }
+    k.className="key "+s;
   });
 
   if(guess===ans){
-    msg.textContent="Correct!";
     document.getElementById("kb-holder-"+n).classList.add("hidden");
-    resetKeyboard();
-
     if(n<4){
       document.getElementById("game"+(n+1)).classList.remove("hidden");
-      const nextHolder=document.getElementById("kb-holder-"+(n+1));
-      nextHolder.classList.remove("hidden");
-      buildKeyboard("kb-holder-"+(n+1));
+      document.getElementById("kb-holder-"+(n+1)).classList.remove("hidden");
+      buildKB("kb-holder-"+(n+1));
     } else {
-      document.getElementById("reveal").style.display="block";
+      confetti();
+      document.getElementById("overlay").style.display="flex";
     }
-  } else {
-    msg.textContent=(MAX_GUESSES-row-1)+" guesses left";
   }
-
-  state[n].tries++;
+  state[n].t++;
 }
 </script>
 </body>

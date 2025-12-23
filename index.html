@@ -67,8 +67,10 @@ input, button {
 }
 
 .keyboard {
-  margin: 30px auto;
-  max-width: 500px;
+  margin: 20px auto 40px auto;
+  max-width: 520px;
+  padding: 10px;
+  border-top: 2px solid #333;
 }
 
 .krow {
@@ -135,10 +137,11 @@ input, button {
 </div>
 
 <!-- KEYBOARD -->
+<h2 style="text-align:center; margin-top:40px;">Keyboard</h2>
 <div class="keyboard" id="keyboard"></div>
 
 <div id="reveal">
-🎉 <strong>SNOW PATROL</strong> in <strong>Crystal Palace Park</strong> — July 2026! 🎶
+🎉 <strong>SNOW PATROL</strong> at <strong>CRYSTAL PALACE PARK</strong> — July 6th 2026! 🎶
 </div>
 
 <script>
@@ -148,7 +151,7 @@ const ANSWERS = {
   3:"snow",
   4:"patrol"
 };
-const MAX_GUESSES = 6;
+const MAX_GUESSES = 8;
 
 let state = {1:{tries:0},2:{tries:0},3:{tries:0},4:{tries:0}};
 let keyState = {};

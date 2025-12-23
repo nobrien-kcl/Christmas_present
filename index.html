@@ -26,9 +26,16 @@ h1 { text-align: center; }
   .games { grid-template-columns: 1fr; }
 }
 
-.game { max-width: 360px; margin: auto; }
+.game {
+  max-width: 360px;
+  margin: auto;
+}
 
-.row { display: flex; justify-content: center; margin: 4px 0; }
+.row {
+  display: flex;
+  justify-content: center;
+  margin: 4px 0;
+}
 
 .tile {
   width: 44px;
@@ -48,15 +55,7 @@ h1 { text-align: center; }
 .absent  { background:#3a3a3c; border-color:#3a3a3c; }
 
 .hidden {
-  opacity: 0;
-  pointer-events: none;
-  transform: translateY(20px);
-}
-
-.game:not(.hidden) {
-  opacity: 1;
-  transform: translateY(0);
-  transition: all 0.5s ease;
+  display: none;
 }
 
 input, button {
@@ -66,11 +65,8 @@ input, button {
   margin-top: 6px;
 }
 
-.keyboard {
-  margin: 20px auto 40px auto;
-  max-width: 520px;
-  padding: 10px;
-  border-top: 2px solid #333;
+.keyboard-holder {
+  margin-top: 15px;
 }
 
 .krow {
@@ -98,7 +94,7 @@ input, button {
   display: none;
   text-align: center;
   font-size: 22px;
-  margin-top: 30px;
+  margin-top: 40px;
 }
 </style>
 </head>
@@ -107,41 +103,47 @@ input, button {
 <h1>Christmas Present Puzzle 🎄</h1>
 
 <div class="games">
+
   <div id="game1" class="game">
     <h2>Puzzle 1 (7)</h2>
-    <div id="grid1"></div><div id="msg1"></div>
+    <div id="grid1"></div>
+    <div id="msg1"></div>
     <input id="guess1" maxlength="7">
     <button onclick="submitGuess(1)">Guess</button>
+    <div class="keyboard-holder" id="kb-holder-1"></div>
   </div>
 
   <div id="game2" class="game hidden">
     <h2>Puzzle 2 (6)</h2>
-    <div id="grid2"></div><div id="msg2"></div>
+    <div id="grid2"></div>
+    <div id="msg2"></div>
     <input id="guess2" maxlength="6">
     <button onclick="submitGuess(2)">Guess</button>
+    <div class="keyboard-holder hidden" id="kb-holder-2"></div>
   </div>
 
   <div id="game3" class="game hidden">
     <h2>Puzzle 3 (4)</h2>
-    <div id="grid3"></div><div id="msg3"></div>
+    <div id="grid3"></div>
+    <div id="msg3"></div>
     <input id="guess3" maxlength="4">
     <button onclick="submitGuess(3)">Guess</button>
+    <div class="keyboard-holder hidden" id="kb-holder-3"></div>
   </div>
 
   <div id="game4" class="game hidden">
     <h2>Puzzle 4 (6)</h2>
-    <div id="grid4"></div><div id="msg4"></div>
+    <div id="grid4"></div>
+    <div id="msg4"></div>
     <input id="guess4" maxlength="6">
     <button onclick="submitGuess(4)">Guess</button>
+    <div class="keyboard-holder hidden" id="kb-holder-4"></div>
   </div>
+
 </div>
 
-<!-- KEYBOARD -->
-<h2 style="text-align:center; margin-top:40px;">Keyboard</h2>
-<div class="keyboard" id="keyboard"></div>
-
 <div id="reveal">
-🎉 <strong>SNOW PATROL</strong> at <strong>CRYSTAL PALACE PARK</strong> — July 6th 2026! 🎶
+🎉 <strong>SNOW PATROL</strong> in <strong>Crystal Palace Park</strong> — July 2026! 🎶
 </div>
 
 <script>
@@ -151,37 +153,12 @@ const ANSWERS = {
   3:"snow",
   4:"patrol"
 };
-const MAX_GUESSES = 8;
+
+const MAX_GUESSES = 6;
+const rows = ["qwertyuiop","asdfghjkl","zxcvbnm"];
 
 let state = {1:{tries:0},2:{tries:0},3:{tries:0},4:{tries:0}};
 let keyState = {};
-
-const rows = ["qwertyuiop","asdfghjkl","zxcvbnm"];
-
-function buildKeyboard() {
-  const kb = document.getElementById("keyboard");
-  kb.innerHTML = "";
-  rows.forEach(r=>{
-    const row=document.createElement("div");
-    row.className="krow";
-    [...r].forEach(l=>{
-      const k=document.createElement("div");
-      k.className="key";
-      k.id="key-"+l;
-      k.textContent=l.toUpperCase();
-      row.appendChild(k);
-    });
-    kb.appendChild(row);
-  });
-}
-buildKeyboard();
-
-function resetKeyboard(){
-  keyState={};
-  document.querySelectorAll(".key").forEach(k=>{
-    k.classList.remove("correct","present","absent");
-  });
-}
 
 function createGrid(n,len){
   const g=document.getElementById("grid"+n);
@@ -197,20 +174,49 @@ function createGrid(n,len){
     g.appendChild(row);
   }
 }
-createGrid(1,7); createGrid(2,6); createGrid(3,4); createGrid(4,6);
+
+createGrid(1,7);
+createGrid(2,6);
+createGrid(3,4);
+createGrid(4,6);
+
+function buildKeyboard(holderId){
+  const holder=document.getElementById(holderId);
+  holder.innerHTML="";
+  rows.forEach(r=>{
+    const row=document.createElement("div");
+    row.className="krow";
+    [...r].forEach(l=>{
+      const k=document.createElement("div");
+      k.className="key";
+      k.id="key-"+l;
+      k.textContent=l.toUpperCase();
+      row.appendChild(k);
+    });
+    holder.appendChild(row);
+  });
+}
+
+function resetKeyboard(){
+  keyState={};
+}
+
+buildKeyboard("kb-holder-1");
 
 function submitGuess(n){
-  const g=document.getElementById("guess"+n);
+  const input=document.getElementById("guess"+n);
   const msg=document.getElementById("msg"+n);
-  const guess=g.value.toLowerCase();
-  g.value="";
+  const guess=input.value.toLowerCase();
+  input.value="";
 
   if(!/^[a-z]+$/.test(guess) || guess.length!==ANSWERS[n].length){
-    msg.textContent="Invalid word"; return;
+    msg.textContent="Invalid word";
+    return;
   }
 
   const ans=ANSWERS[n];
-  let freq={}; [...ans].forEach(c=>freq[c]=(freq[c]||0)+1);
+  let freq={};
+  [...ans].forEach(c=>freq[c]=(freq[c]||0)+1);
   let res=Array(guess.length).fill("absent");
 
   for(let i=0;i<guess.length;i++){
@@ -219,7 +225,7 @@ function submitGuess(n){
     }
   }
   for(let i=0;i<guess.length;i++){
-    if(res[i]==="correct")continue;
+    if(res[i]==="correct") continue;
     if(freq[guess[i]]>0){
       res[i]="present"; freq[guess[i]]--;
     }
@@ -240,9 +246,14 @@ function submitGuess(n){
 
   if(guess===ans){
     msg.textContent="Correct!";
+    document.getElementById("kb-holder-"+n).classList.add("hidden");
     resetKeyboard();
+
     if(n<4){
       document.getElementById("game"+(n+1)).classList.remove("hidden");
+      const nextHolder=document.getElementById("kb-holder-"+(n+1));
+      nextHolder.classList.remove("hidden");
+      buildKeyboard("kb-holder-"+(n+1));
     } else {
       document.getElementById("reveal").style.display="block";
     }

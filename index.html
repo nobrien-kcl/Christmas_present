@@ -135,7 +135,7 @@ button {
 </div>
 
 <div id="reveal">
-🎉 <strong>SNOW PATROL</strong> at <strong>Crystal Palace Park</strong> — July 6th 2026! 🎶
+🎉 <strong>SNOW PATROL</strong> in <strong>Crystal Palace Park</strong> — July 2026! 🎶
 </div>
 
 <script>
@@ -190,4 +190,76 @@ function submitGuess(n) {
   if (row >= MAX_GUESSES) return;
 
   const answer = ANSWERS[n];
-  let fre
+  let freq = {};
+  for (let c of answer) freq[c] = (freq[c] || 0) + 1;
+
+  let result = Array(guess.length).fill("absent");
+
+  for (let i = 0; i < guess.length; i++) {
+    if (guess[i] === answer[i]) {
+      result[i] = "correct";
+      freq[guess[i]]--;
+    }
+  }
+
+  for (let i = 0; i < guess.length; i++) {
+    if (result[i] === "correct") continue;
+    if (freq[guess[i]] > 0) {
+      result[i] = "present";
+      freq[guess[i]]--;
+    }
+  }
+
+  for (let i = 0; i < guess.length; i++) {
+    const tile = document.getElementById(`t-${n}-${row}-${i}`);
+    tile.textContent = guess[i];
+    tile.classList.add(result[i]);
+  }
+
+  if (guess === answer) {
+    msg.textContent = "Correct!";
+    if (n < 4) {
+      document.getElementById("game" + (n + 1)).classList.remove("hidden");
+    } else {
+      revealPrize();
+    }
+  } else {
+    msg.textContent = (MAX_GUESSES - row - 1) + " guesses left";
+  }
+
+  state[n].tries++;
+}
+
+function revealPrize() {
+  document.getElementById("reveal").style.display = "block";
+  launchConfetti();
+}
+
+function launchConfetti() {
+  const colors = ["#6aaa64", "#c9b458", "#ffffff"];
+  const end = Date.now() + 2000;
+
+  (function frame() {
+    for (let i = 0; i < 10; i++) {
+      const c = document.createElement("div");
+      c.style.position = "fixed";
+      c.style.top = Math.random() * 100 + "%";
+      c.style.left = Math.random() * 100 + "%";
+      c.style.width = "8px";
+      c.style.height = "8px";
+      c.style.background = colors[Math.floor(Math.random() * colors.length)];
+      c.style.opacity = "1";
+      c.style.transition = "all 2s linear";
+      document.body.appendChild(c);
+      setTimeout(() => {
+        c.style.transform = "translateY(200px) rotate(720deg)";
+        c.style.opacity = "0";
+      }, 10);
+      setTimeout(() => c.remove(), 2100);
+    }
+    if (Date.now() < end) requestAnimationFrame(frame);
+  })();
+}
+</script>
+</body>
+</html>
